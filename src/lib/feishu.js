@@ -84,11 +84,11 @@ class FeishuAPI {
 
       // 查询当前记录数，生成自增序号
       const count = await this.getRecordCount(appToken, tableId);
-      const序号 = String(count + 1);
+      const seqNo = String(count + 1);
 
       // 构建记录数据 (根据PRD字段设计)
       const fields = {
-        '文本': 序号,
+        '文本': seqNo,
         '群名': groupName,
         '聊天记录': chatContent,
         '同步时间': new Date().toISOString().slice(0, 19).replace('T', ' ')
