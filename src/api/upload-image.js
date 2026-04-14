@@ -1,4 +1,4 @@
-// POST /api/upload-image - 接收小程序上传的图片，转存到飞书
+// POST /api/upload-image - 接收小程序上传的图片（base64），转存到飞书
 const multer = require('multer');
 const FeishuAPI = require('../lib/feishu');
 const FeishuAuth = require('../lib/auth');
@@ -6,31 +6,40 @@ const { formatErrorResponse, InvalidInputError, logError } = require('../lib/err
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 最大 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 const uploadImageHandler = [
   upload.single('file'),
   async (req, res) => {
     try {
-      if (!req.file) {
-        throw new InvalidInputError('未收到图片文件');
-      }
-
+      const appId = req.body.feishu_app_id || process.env.FEISHU_APP_ID;
+      const appSecret = req.body.feishu_app_secret || process.env.FEISHU_APP_SECRET;
       const appToken = req.body.app_token;
+
       if (!appToken) {
         throw new InvalidInputError('缺少 app_token 参数');
       }
 
-      const appId = req.body.feishu_app_id || process.env.FEISHU_APP_ID;
-      const appSecret = req.body.feishu_app_secret || process.env.FEISHU_APP_SECRET;
-
       const auth = new FeishuAuth(appId, appSecret);
       const feishuAPI = new FeishuAPI(auth);
 
-      const fileName = req.file.originalname || `image_${Date.now()}.jpg`;
-      const fileToken = await feishuAPI.uploadImage(appToken, req.file.buffer, fileName);
+      let imageBuffer;
+      let fileName;
 
+      if (req.body.file_base64) {
+        // base64 方式（wx.cloud.callContainer）
+        imageBuffer = Buffer.from(req.body.file_base64, 'base64');
+        fileName = req.body.file_name || `image_${Date.now()}.jpg`;
+      } else if (req.file) {
+        // multipart 方式（兼容旧调用）
+        imageBuffer = req.file.buffer;
+        fileName = req.file.originalname || `image_${Date.now()}.jpg`;
+      } else {
+        throw new InvalidInputError('未收到图片文件');
+      }
+
+      const fileToken = await feishuAPI.uploadImage(appToken, imageBuffer, fileName);
       res.json({ success: true, file_token: fileToken, file_name: fileName });
     } catch (error) {
       logError('UploadImageAPI', error);
