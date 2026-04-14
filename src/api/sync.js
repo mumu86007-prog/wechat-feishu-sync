@@ -99,6 +99,7 @@ const syncHandler = async (req, res) => {
       };
     } else {
       // 归档模式（默认）：整群合并为一行
+      console.log('[SyncAPI] 调用飞书写入, app_token:', feishu_app_token, 'table_id:', feishu_table_id);
       const result = await feishuAPI.syncChatRecord(
         feishu_app_token,
         feishu_table_id,
@@ -107,6 +108,7 @@ const syncHandler = async (req, res) => {
         remark,
         imageTokens
       );
+      console.log('[SyncAPI] 飞书写入结果:', JSON.stringify(result));
       responseData = {
         layout_mode: 'archive',
         record_id: result.recordId,
