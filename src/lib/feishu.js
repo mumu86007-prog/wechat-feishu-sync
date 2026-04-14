@@ -113,6 +113,7 @@ class FeishuAPI {
       }
 
       const data = JSON.parse(response.data);
+      console.log('[FeishuAPI] syncChatRecord response:', JSON.stringify(data));
 
       if (data.code !== 0) {
         logError('FeishuAPI', new Error(`Feishu API error: ${data.msg}`), {
