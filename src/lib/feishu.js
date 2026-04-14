@@ -62,14 +62,33 @@ class FeishuAPI {
   }
 
   /**
+   * 查询表格当前记录总数
+   */
+  async getRecordCount(appToken, tableId) {
+    const accessToken = await this.auth.getAccessToken();
+    const response = await this.httpClient.request(
+      `${this.baseURL}/bitable/v1/apps/${appToken}/tables/${tableId}/records?page_size=1`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!response.ok) return 0;
+    const data = JSON.parse(response.data);
+    return data.data?.total || 0;
+  }
+
+  /**
    * 同步聊天记录到飞书表格 (POST /api/sync 的核心逻辑)
    */
   async syncChatRecord(appToken, tableId, groupName, chatContent, remark = '', imageTokens = []) {
     try {
       const accessToken = await this.auth.getAccessToken();
 
+      // 查询当前记录数，生成自增序号
+      const count = await this.getRecordCount(appToken, tableId);
+      const序号 = String(count + 1);
+
       // 构建记录数据 (根据PRD字段设计)
       const fields = {
+        '文本': 序号,
         '群名': groupName,
         '聊天记录': chatContent,
         '同步时间': new Date().toISOString().slice(0, 19).replace('T', ' ')
