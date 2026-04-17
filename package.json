@@ -1,6 +1,6 @@
 {
   "name": "wechat-feishu-sync",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "description": "微信群聊记录同步飞书多维表格后端服务",
   "main": "server.js",
   "scripts": {

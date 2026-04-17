@@ -153,6 +153,15 @@ class FeishuAPI {
     }
   }
   /**
+   * 根据文件名推断 MIME 类型
+   */
+  _getMimeType(fileName) {
+    const ext = (fileName.split('.').pop() || '').toLowerCase();
+    const map = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp' };
+    return map[ext] || 'image/jpeg';
+  }
+
+  /**
    * 上传图片到飞书，返回 file_token
    * imageBuffer: Buffer, fileName: string, appToken: string
    */
@@ -160,13 +169,14 @@ class FeishuAPI {
     const accessToken = await this.auth.getAccessToken();
     const boundary = 'FeishuBoundary' + Date.now();
     const fileSize = imageBuffer.length;
+    const mimeType = this._getMimeType(fileName);
 
     const parts = [
       Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file_name"\r\n\r\n${fileName}\r\n`),
       Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_type"\r\n\r\nbitable_image\r\n`),
       Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_node"\r\n\r\n${appToken}\r\n`),
       Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="size"\r\n\r\n${fileSize}\r\n`),
-      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: image/jpeg\r\n\r\n`),
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: ${mimeType}\r\n\r\n`),
       imageBuffer,
       Buffer.from(`\r\n--${boundary}--\r\n`)
     ];
